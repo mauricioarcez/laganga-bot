@@ -18,11 +18,18 @@ def format_deal_message(deal: Deal) -> str:
     """Formats the deal into a tweet message."""
     details_text = deal.details if deal.details else ""
     
+    # Format price as integer to avoid unnecessary decimals (e.g., 19999.0 -> 19999)
+    price_formatted = int(deal.current_price)
+    
+    # Format store name in uppercase and discount as integer
+    source_formatted = deal.source.upper()
+    discount_formatted = int(deal.discount_percent)
+    
     formatted_message = TWITTER_FLASH_DEAL_TEMPLATE.format(
-        source=deal.source,
-        discount_percent=deal.discount_percent,
+        source=source_formatted,
+        discount_percent=discount_formatted,
         name=deal.name,
-        current_price=deal.current_price,
+        current_price=price_formatted,
         details=details_text,
         slug=deal.slug,
         image_url=""

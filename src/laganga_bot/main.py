@@ -81,7 +81,11 @@ def main():
 
         # 4. Post
         twitter = TwitterClient()
-        twitter.post_tweet(message, image_url=target_deal.image_url)
+        twitter.post_tweet(
+            message, 
+            image_url=target_deal.image_url, 
+            discount_percent=target_deal.discount_percent
+        )
         
         # 5. Persist
         store.mark_as_posted(target_deal.id)

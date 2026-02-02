@@ -1,3 +1,4 @@
+import mimetypes
 import tweepy
 import logging
 import os
@@ -6,6 +7,7 @@ import tempfile
 from typing import Optional
 
 from laganga_bot.settings import settings
+from laganga_bot.publish.image_processor import process_deal_image
 
 logger = logging.getLogger(__name__)
 
@@ -34,22 +36,37 @@ class TwitterClient:
         )
         self.api = tweepy.API(auth)
 
-    def post_tweet(self, text: str, image_url: str = None) -> Optional[str]:
+    def post_tweet(self, text: str, image_url: str = None, discount_percent: int = None) -> Optional[str]:
         """
         Posts a tweet. If image_url is provided, uploads the image first.
+        If discount_percent is provided, overlays it on the image.
         Returns the tweet ID.
         """
         try:
             media_ids = []
             if image_url:
-                # Download image to temp file
-                response = requests.get(image_url, stream=True)
+                # Download image to temp file with retry logic
+                from laganga_bot.fetch.endpoint import get_retrying_session
+                session = get_retrying_session()
+                
+                response = session.get(image_url, stream=True, timeout=30)
                 if response.status_code == 200:
-                    with tempfile.NamedTemporaryFile(delete=False) as temp_img:
+                    # Guess extension based on content type
+                    content_type = response.headers.get('content-type')
+                    extension = mimetypes.guess_extension(content_type)
+                    if not extension:
+                        # Fallback to .jpg if unknown
+                        extension = ".jpg"
+
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as temp_img:
                         temp_img.write(response.content)
                         temp_path = temp_img.name
                     
                     try:
+                        # Process image (add overlay) if we have the needed info
+                        if discount_percent is not None:
+                            process_deal_image(temp_path, discount_percent)
+
                         # Upload media
                         media = self.api.media_upload(filename=temp_path)
                         media_ids.append(media.media_id)
