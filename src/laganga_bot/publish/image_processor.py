@@ -147,7 +147,8 @@ def process_deal_image(image_path: str, discount_percent: int) -> str:
             draw_badge.rounded_rectangle((0, 0, badge_w-1, badge_h-1), radius=radius, outline="white", width=border_width)
             
             # Draw Text on Badge
-            text = f"-{discount_percent}%"
+            # Convert to int to avoid decimals (e.g., 80 instead of 80.0)
+            text = f"-{int(discount_percent)}%"
             # Reduced font size slightly for cleaner look
             font_size = int(badge_h * 0.55) 
             font = load_font(font_size, bold=True)
