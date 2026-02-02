@@ -1,21 +1,24 @@
 from PIL import Image, ImageDraw, ImageFont
 import logging
 import os
-import math
 
 logger = logging.getLogger(__name__)
 
-def load_font(size: int) -> ImageFont.FreeTypeFont:
+def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     """
     Attempts to load a standard font for diverse OSs.
     """
-    candidates = [
+    candidates = []
+    if bold:
+        candidates.extend(["arialbd.ttf", "DejaVuSans-Bold.ttf", "FreeSansBold.ttf", "Roboto-Bold.ttf"])
+    
+    candidates.extend([
         "arial.ttf",           # Windows
         "DejaVuSans-Bold.ttf", # Linux 
         "DejaVuSans.ttf",
         "FreeSans.ttf",
         "liberation-sans.ttf"
-    ]
+    ])
     
     for font_name in candidates:
         try:
@@ -50,19 +53,11 @@ def add_watermark(img: Image.Image, text: str) -> Image.Image:
     x_gap = text_w * 1.5
     y_gap = text_h * 4
     
-    # Rotate context? No, simpler to draw usually, but for diagonal 
-    # we usually draw on a separate temp image, rotate it, and paste.
-    # Or just write rotated text? Pillow doesn't draw text rotated directly.
-    # We must draw text on a small image, rotate it, and paste it.
-    
-    # Efficient way: Create one tile and repeat? 
-    # Or simpler: Just simple diagonal placement.
-    
     # Create a single watermark stamp
     stamp = Image.new('RGBA', (int(text_w * 1.2), int(text_h * 2)), (255, 255, 255, 0))
     draw_stamp = ImageDraw.Draw(stamp)
-    # Changed to black (0,0,0) with low opacity (40/255) to be visible on white backgrounds
-    draw_stamp.text((0, 0), text, font=font, fill=(0, 0, 0, 40)) 
+    # Changed to black (0,0,0) with opacity (160/255) to be more visible
+    draw_stamp.text((0, 0), text, font=font, fill=(0, 0, 0, 160)) 
     
     # Rotate the stamp
     rotated_stamp = stamp.rotate(30, expand=True, resample=Image.BICUBIC)
@@ -79,6 +74,41 @@ def add_watermark(img: Image.Image, text: str) -> Image.Image:
         
     return Image.alpha_composite(img, txt_layer)
 
+def create_gradient_badge(width: int, height: int) -> Image.Image:
+    """
+    Creates a rounded rectangle badge with a modern fire-orange gradient.
+    """
+    # 1. Create Linear Gradient
+    # Gradient Colors: "Fire" / Modern Orange-Red
+    start_color = (255, 140, 0) # Dark Orange
+    end_color = (208, 0, 0)     # Deep Red
+    
+    # Generate 1xHeight gradient strip
+    gradient_strip = Image.new('RGB', (1, height))
+    for y in range(height):
+        # Linear interpolation
+        ratio = y / height
+        r = int(start_color[0] + (end_color[0] - start_color[0]) * ratio)
+        g = int(start_color[1] + (end_color[1] - start_color[1]) * ratio)
+        b = int(start_color[2] + (end_color[2] - start_color[2]) * ratio)
+        gradient_strip.putpixel((0, y), (r, g, b))
+        
+    # Resize to fill
+    gradient_rect = gradient_strip.resize((width, height), resample=Image.Resampling.NEAREST)
+    
+    # 2. Add Alpha Mask for Rounded Rectangle
+    mask = Image.new('L', (width, height), 0)
+    draw_mask = ImageDraw.Draw(mask)
+    # Corner radius ~20% of min dimension
+    radius = int(min(width, height) * 0.25)
+    draw_mask.rounded_rectangle((0, 0, width, height), radius=radius, fill=255)
+    
+    # Apply mask
+    badge = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    badge.paste(gradient_rect, (0, 0), mask=mask)
+    
+    return badge
+
 def process_deal_image(image_path: str, discount_percent: int) -> str:
     """
     Adds overlays to the image: watermark, discount badge, and logo footer.
@@ -94,42 +124,49 @@ def process_deal_image(image_path: str, discount_percent: int) -> str:
             # --- 1. Watermark ---
             img = add_watermark(img, "lagangaofertas.com")
             
-            # Prepare to draw on top
-            draw = ImageDraw.Draw(img)
-            
             # --- 2. Discount Badge (Top Right) ---
-            # Adjusted size: 28% of min dimension, min 90px to prevent overpowering small images
-            badge_diameter = int(min(width, height) * 0.28)
-            badge_diameter = max(badge_diameter, 90)
+            # Use a rectangular shape now
+            # Base height on 15% of image min dim
+            badge_h = int(min(width, height) * 0.15)
+            badge_h = max(badge_h, 50)
+            
+            # Width = based on aspect ratio approx 1.8:1
+            badge_w = int(badge_h * 1.8)
             
             padding = 15
-            x0 = width - badge_diameter - padding
+            x0 = width - badge_w - padding
             y0 = padding
-            x1 = width - padding
-            y1 = badge_diameter + padding
             
-            # Draw red circle
-            draw.ellipse([x0, y0, x1, y1], fill="#E02424", outline="white", width=4)
+            # Create Gradient Badge
+            badge = create_gradient_badge(badge_w, badge_h)
             
-            # Text
+            # Draw Border on Badge
+            draw_badge = ImageDraw.Draw(badge)
+            border_width = int(max(2, badge_h * 0.05))
+            radius = int(min(badge_w, badge_h) * 0.25)
+            draw_badge.rounded_rectangle((0, 0, badge_w-1, badge_h-1), radius=radius, outline="white", width=border_width)
+            
+            # Draw Text on Badge
             text = f"-{discount_percent}%"
-            # Adjust font size to fit well (approx 35% of diameter is usually safe)
-            font_size = int(badge_diameter * 0.35) 
-            font = load_font(font_size)
+            # Reduced font size slightly for cleaner look
+            font_size = int(badge_h * 0.55) 
+            font = load_font(font_size, bold=True)
             
-            left, top, right, bottom = draw.textbbox((0, 0), text, font=font)
+            left, top, right, bottom = draw_badge.textbbox((0, 0), text, font=font)
             text_w = right - left
             text_h = bottom - top
             
-            text_x = x0 + (badge_diameter - text_w) / 2
-            text_y = y0 + (badge_diameter - text_h) / 2
+            text_x = (badge_w - text_w) / 2
+            text_y = (badge_h - text_h) / 2 - (bottom * 0.12)
             
-            # Offset Y slightly if needed to visual center
-            text_y -= bottom * 0.1 
+            draw_badge.text((text_x, text_y), text, fill="white", font=font)
+            
+            # Paste Badge onto Image
+            img.paste(badge, (x0, y0), badge)
 
-            draw.text((text_x, text_y), text, fill="white", font=font)
-            
             # --- 3. Footer with Logo ---
+            draw = ImageDraw.Draw(img)
+            
             # Bar height 8% of image height
             bar_height = max(50, int(height * 0.08))
             draw.rectangle([0, height - bar_height, width, height], fill=(2, 8, 23))
