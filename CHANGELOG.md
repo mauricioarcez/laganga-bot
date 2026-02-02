@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `state/inspect_db.py` interactive script to inspect and clear the database.
 
 ### Changed
+- **API Resilience**: Added retry logic with exponential backoff and increased timeouts to 30s to handle Render's "cold start" and transient errors.
 - **Twitter Publishing**: integrated image processing pipeline before uploading media.
 - **Tweet Formatting**: Improved message readability:
     - Store names displayed in uppercase (e.g., "FRAVEGA" instead of "Fravega").
