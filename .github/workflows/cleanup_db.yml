@@ -1,16 +1,16 @@
-name: Twitter Bot
+name: Cleanup DB
 
 on:
   schedule:
-    # 17:00 Argentina time is 20:00 UTC
-    - cron: '0 20 * * *'
+    # Run at 00:00 on day-of-month 1 and 15.
+    - cron: '0 0 1,15 * *'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  post-deal:
+  cleanup-db:
     runs-on: ubuntu-latest
     
     steps:
@@ -26,14 +26,8 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Run Twitter Bot
-        env:
-          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
-          TWITTER_API_KEY_SECRET: ${{ secrets.TWITTER_API_KEY_SECRET }}
-          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-          FLASH_DEALS_API_URL: ${{ secrets.FLASH_DEALS_API_URL }}
-        run: uv run python -m laganga_bot.main
+      - name: Run Cleanup
+        run: uv run python -m laganga_bot.main --clear-db
 
       - name: Commit and Push DB Changes
         if: success()
@@ -42,4 +36,4 @@ jobs:
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
           git add state/bot_history.db
           # Only commit if there are changes
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update bot state [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Cleanup bot history [skip ci]" && git push)
