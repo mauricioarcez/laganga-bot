@@ -50,6 +50,7 @@ class TestBotFlow(unittest.TestCase):
     def test_format_message_with_details(self):
         deal = self.sample_deals[0]
         msg = format_deal_message(deal)
+        print(f"\n📝 Formatted Tweet (with details):\n{msg}\n")
         self.assertIn("Details A", msg)
         self.assertIn("Deal 1", msg)
         self.assertIn("50% OFF", msg)
@@ -57,6 +58,7 @@ class TestBotFlow(unittest.TestCase):
     def test_format_message_without_details(self):
         deal = self.sample_deals[1]
         msg = format_deal_message(deal)
+        print(f"\n📝 Formatted Tweet (without details):\n{msg}\n")
         self.assertNotIn("None", msg) # Ensure None isn't printed
         self.assertIn("Deal 2", msg)
 

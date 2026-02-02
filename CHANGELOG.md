@@ -23,7 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Twitter Publishing**: integrated image processing pipeline before uploading media.
+- **Tweet Formatting**: Improved message readability:
+    - Store names displayed in uppercase (e.g., "FRAVEGA" instead of "Fravega").
+    - Prices displayed as integers without decimals (e.g., "$19999" instead of "$19999.0").
+    - Discount percentages displayed as integers (e.g., "80%" instead of "80.0%").
 - **Dependencies**: added `pillow>=10.0.0` to `pyproject.toml`.
+- **Tests**: Added formatted tweet output display in test runs for better visibility.
 
 ## [0.1.0] - 2026-02-01
 
