@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDES
+.vscode/
+.idea/
+
+# Distribution / Packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Project specific
+# We want to track state/bot_history.db optionally, but usually DBs are ignored. 
+# However, the user wants to persist it via git. 
+# So we do NOT ignore state/
+# But we might want to ignore other things in state if they arise. 
+# For now, we leave state/ visible.
+
+# Logs
+*.log
