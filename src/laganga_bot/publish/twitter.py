@@ -45,8 +45,11 @@ class TwitterClient:
         try:
             media_ids = []
             if image_url:
-                # Download image to temp file
-                response = requests.get(image_url, stream=True)
+                # Download image to temp file with retry logic
+                from laganga_bot.fetch.endpoint import get_retrying_session
+                session = get_retrying_session()
+                
+                response = session.get(image_url, stream=True, timeout=30)
                 if response.status_code == 200:
                     # Guess extension based on content type
                     content_type = response.headers.get('content-type')
