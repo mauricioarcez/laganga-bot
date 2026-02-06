@@ -4,6 +4,6 @@ TWITTER_FLASH_DEAL_TEMPLATE = """🔥 OFERTA ENCONTRADA EN {source} | {discount_
 
 🚚 {details}
 
-Mira más detalles: 👉 https://lagangaofertas.com/flash-deals/{slug}
+👉 https://lagangaofertas.com/flash-deals/{slug}
 {image_url}
 """
