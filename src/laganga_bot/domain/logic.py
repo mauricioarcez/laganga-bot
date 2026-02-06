@@ -25,16 +25,37 @@ def format_deal_message(deal: Deal) -> str:
     source_formatted = deal.source.upper()
     discount_formatted = int(deal.discount_percent)
     
-    formatted_message = TWITTER_FLASH_DEAL_TEMPLATE.format(
-        source=source_formatted,
-        discount_percent=discount_formatted,
-        name=deal.name,
-        current_price=price_formatted,
-        details=details_text,
-        slug=deal.slug,
-        image_url=""
-    ).replace("{image_url}", "").strip()
+    def render_message(name_val: str, details_val: str) -> str:
+        return TWITTER_FLASH_DEAL_TEMPLATE.format(
+            source=source_formatted,
+            discount_percent=discount_formatted,
+            name=name_val,
+            current_price=price_formatted,
+            details=details_val,
+            slug=deal.slug,
+            image_url=""
+        ).replace("{image_url}", "").strip()
 
+    # Strategy 1: Full message
+    formatted_message = render_message(deal.name, details_text)
+    if len(formatted_message) <= 280:
+        return formatted_message
+
+    # Strategy 2: Truncate name to 3 words
+    short_name = " ".join(deal.name.split()[:3])
+    formatted_message = render_message(short_name, details_text)
+    if len(formatted_message) <= 280:
+        return formatted_message
+
+    # Strategy 3: Truncate details to 3 words
+    short_details = " ".join(details_text.split()[:3])
+    formatted_message = render_message(short_name, short_details)
+    if len(formatted_message) <= 280:
+        return formatted_message
+
+    # Strategy 4: Remove image_url (Already handled by passing empty string, 
+    # but strictly following user priority list if we had content there)
+    
     if len(formatted_message) > 280:
         raise ValueError(f"Message exceeds 280 character limit: {len(formatted_message)} chars")
 
