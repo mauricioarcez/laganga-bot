@@ -89,5 +89,3 @@ uv run python state/inspect_db.py
 
 - **Publicación Diaria**: El workflow `.github/workflows/twitter_bot.yml` ejecuta el bot diariamente a las 17:00 (Hora Argentina). Se encarga de guardar el estado (`bot_history.db`) en el repositorio.
 - **Limpieza de Historial**: El workflow `.github/workflows/cleanup_db.yml` se ejecuta el 1 y 15 de cada mes para vaciar la base de datos de ofertas publicadas, permitiendo que ofertas antiguas vuelvan a ser elegibles.
-
-git push --force origin feat/twitter-bot
