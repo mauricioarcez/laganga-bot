@@ -2,8 +2,9 @@ name: Twitter Bot
 
 on:
   schedule:
-    # 17:00 Argentina time is 20:00 UTC
-    - cron: '0 20 * * *'
+    # Argentina (UTC-3): 09:00 (Mañana), 14:00 (Siesta), 19:00 (Tarde), 00:00 (Noche)
+    # UTC: 12:00, 17:00, 22:00, 03:00
+    - cron: '0 3,12,17,22 * * *'
   workflow_dispatch:
 
 permissions:
