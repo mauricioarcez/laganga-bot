@@ -18,8 +18,9 @@ def format_deal_message(deal: Deal) -> str:
     """Formats the deal into a tweet message."""
     details_text = deal.details if deal.details else ""
     
-    # Format price as integer to avoid unnecessary decimals (e.g., 19999.0 -> 19999)
-    price_formatted = int(deal.current_price)
+    # Format price as integer to avoid unnecessary decimals, and add dot as thousands separator
+    price_formatted = f"{int(deal.current_price):,}".replace(",", ".")
+    original_price_formatted = f"{int(deal.original_price):,}".replace(",", ".")
     
     # Format store name in uppercase and discount as integer
     source_formatted = deal.source.upper()
@@ -30,6 +31,7 @@ def format_deal_message(deal: Deal) -> str:
             source=source_formatted,
             discount_percent=discount_formatted,
             name=name_val,
+            original_price=original_price_formatted,
             current_price=price_formatted,
             details=details_val,
             slug=deal.slug,

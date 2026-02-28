@@ -1,9 +1,11 @@
+
 import mimetypes
 import tweepy
 import logging
 import os
 import requests
 import tempfile
+import time
 from typing import Optional
 
 from laganga_bot.settings import settings
@@ -68,17 +70,46 @@ class TwitterClient:
                             process_deal_image(temp_path, discount_percent)
 
                         # Upload media
-                        media = self.api.media_upload(filename=temp_path)
-                        media_ids.append(media.media_id)
+                        # We also wrap the media upload in retry logic occasionally, but main issue was tweet creation
+                        max_upload_retries = 3
+                        for attempt in range(max_upload_retries):
+                            try:
+                                media = self.api.media_upload(filename=temp_path)
+                                media_ids.append(media.media_id)
+                                break
+                            except tweepy.errors.TwitterServerError as e:
+                                if attempt < max_upload_retries - 1:
+                                    wait_time = (2 ** attempt) * 5
+                                    logger.warning(f"Twitter server error on image upload ({e}), retrying in {wait_time}s...")
+                                    time.sleep(wait_time)
+                                else:
+                                    raise
                     finally:
                         if os.path.exists(temp_path):
                             os.remove(temp_path)
                 else:
                     logger.warning(f"Failed to download image from {image_url}")
 
-            response = self.client.create_tweet(text=text, media_ids=media_ids if media_ids else None)
-            logger.info(f"Tweet posted successfully. ID: {response.data['id']}")
-            return response.data['id']
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    response = self.client.create_tweet(text=text, media_ids=media_ids if media_ids else None)
+                    logger.info(f"Tweet posted successfully. ID: {response.data['id']}")
+                    return response.data['id']
+                except tweepy.errors.TwitterServerError as e:
+                    if attempt < max_retries - 1:
+                        wait_time = (2 ** attempt) * 5
+                        logger.warning(f"Twitter server error on tweet creation ({e}), retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        raise
+                except tweepy.errors.TooManyRequests as e:
+                    if attempt < max_retries - 1:
+                        wait_time = 30
+                        logger.warning(f"Rate limited by Twitter, retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        raise
             
         except Exception as e:
             logger.error(f"Failed to post tweet: {e}")

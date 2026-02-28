@@ -1,6 +1,6 @@
 [project]
 name = "laganga-bot"
-version = "0.2.0"
+version = "0.2.3"
 description = "Bot for posting flash deals from La Ganga Ofertas to social networks"
 readme = "README.md"
 requires-python = ">=3.10"
