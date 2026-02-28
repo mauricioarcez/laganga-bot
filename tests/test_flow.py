@@ -81,10 +81,10 @@ class TestTwitterPublishing(unittest.TestCase):
     @patch('laganga_bot.publish.twitter.tweepy.Client')
     @patch('laganga_bot.publish.twitter.tweepy.OAuth1UserHandler')
     @patch('laganga_bot.publish.twitter.tweepy.API')
-    @patch('laganga_bot.publish.twitter.requests.get')
+    @patch('laganga_bot.publish.twitter.get_retrying_session')
     @patch('laganga_bot.publish.twitter.os.remove') # Prevent actual file removal
     @patch('laganga_bot.publish.twitter.tempfile.NamedTemporaryFile')
-    def test_post_tweet_with_image_rendering(self, mock_temptool, mock_remove, mock_get, mock_api, mock_auth, mock_client):
+    def test_post_tweet_with_image_rendering(self, mock_temptool, mock_remove, mock_get_session, mock_api, mock_auth, mock_client):
         """Test that the image is downloaded and uploaded correctly (rendered)."""
         from laganga_bot.publish.twitter import TwitterClient
         
@@ -92,7 +92,8 @@ class TestTwitterPublishing(unittest.TestCase):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.content = b'fake_image_data'
-        mock_get.return_value = mock_response
+        mock_session_instance = mock_get_session.return_value
+        mock_session_instance.get.return_value = mock_response
 
         # Mock temp file
         mock_temp_file = MagicMock()
@@ -125,7 +126,7 @@ class TestTwitterPublishing(unittest.TestCase):
             tweet_id = client.post_tweet("Hello World", image_url="http://example.com/image.jpg")
             
             # 1. Verify Image Download (Rendering check)
-            mock_get.assert_called_with("http://example.com/image.jpg", stream=True)
+            mock_session_instance.get.assert_called_with("http://example.com/image.jpg", stream=True, timeout=30)
             
             # 2. Verify Temp File Write
             mock_temp_file.write.assert_called_with(b'fake_image_data')

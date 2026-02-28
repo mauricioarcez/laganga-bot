@@ -2,8 +2,8 @@ name: Cleanup DB
 
 on:
   schedule:
-    # Run at 00:00 on day-of-month 1 and 15.
-    - cron: '0 0 1,15 * *'
+    # Run at 00:00 on day-of-month 1.
+    - cron: '0 0 1 * *'
   workflow_dispatch:
 
 permissions:
