@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Twitter API Errors**: Added automatic retry logic with exponential backoff for `503 Service Unavailable` and `429 Too Many Requests` errors from the Twitter API during media upload and tweet creation.
+- **Database Maintenance**: Updated the cleanup workflow (`cleanup_db.yml`) to clear the database once a month (on the 1st day) instead of every 15 days.
 
 
 ## [0.2.2] - 2026-02-13
